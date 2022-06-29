@@ -13,7 +13,7 @@ import numpy as np
 from rsoccer_gym.Entities import Frame, Robot
 from rsoccer_gym.Simulators.rsim import RSimVSS
 from rsoccer_gym.Simulators.fira import Fira
-
+import ipdb
 
 
 class VSSBaseEnv(gym.Env):
@@ -21,29 +21,29 @@ class VSSBaseEnv(gym.Env):
         'render.modes': ['human', 'rgb_array'],
     }
     NORM_BOUNDS = 1.2
-    
+
     def __init__(self, field_type: int,
                  n_robots_blue: int, n_robots_yellow: int, time_step: float):
         # Initialize Simulator
         self.time_step = time_step
         self.rsim = RSimVSS(field_type=field_type,
-                                      n_robots_blue=n_robots_blue,
-                                      n_robots_yellow=n_robots_yellow,
-                                      time_step_ms=int(self.time_step*1000))
+                            n_robots_blue=n_robots_blue,
+                            n_robots_yellow=n_robots_yellow,
+                            time_step_ms=int(self.time_step*1000))
         self.n_robots_blue = n_robots_blue
         self.n_robots_yellow = n_robots_yellow
 
         # Get field dimensions
         self.field_type = field_type
         self.field = self.rsim.get_field_params()
-        self.max_pos = max(self.field.width / 2, (self.field.length / 2) 
-                                + self.field.penalty_length)
+        self.max_pos = max(self.field.width / 2, (self.field.length / 2)
+                           + self.field.penalty_length)
         max_wheel_rad_s = (self.field.rbt_motor_max_rpm / 60) * 2 * np.pi
         self.max_v = max_wheel_rad_s * self.field.rbt_wheel_radius
         # 0.04 = robot radius (0.0375) + wheel thicknees (0.0025)
         self.max_w = np.rad2deg(self.max_v / 0.04)
-        
-        # Initiate 
+
+        # Initiate
         self.frame: Frame = None
         self.last_frame: Frame = None
         self.view = None
@@ -52,8 +52,9 @@ class VSSBaseEnv(gym.Env):
 
     def step(self, action):
         self.steps += 1
+        # ipdb.set_trace()
         # Join agent action with environment actions
-        commands: List[Robot] = self._get_commands(action)
+        commands, velocities = self._get_commands(action)
         # Send command to simulator
         self.rsim.send_commands(commands)
         self.sent_commands = commands
@@ -66,7 +67,7 @@ class VSSBaseEnv(gym.Env):
         observation = self._frame_to_observations()
         reward, done = self._calculate_reward_and_done()
 
-        return observation, reward, done, {}
+        return observation, velocities, done, {}
 
     def reset(self):
         self.steps = 0
@@ -102,12 +103,11 @@ class VSSBaseEnv(gym.Env):
         if self.view == None:
             from rsoccer_gym.Render import RCGymRender
             self.view = RCGymRender(self.n_robots_blue,
-                                 self.n_robots_yellow,
-                                 self.field,
-                                 simulator='vss')
+                                    self.n_robots_yellow,
+                                    self.field,
+                                    simulator='vss')
 
         return self.view.render_frame(self.frame, return_rgb_array=mode == "rgb_array")
-        
 
     def close(self):
         self.rsim.stop()
