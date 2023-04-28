@@ -15,35 +15,35 @@ from rsoccer_gym.Simulators.rsim import RSimVSS
 from rsoccer_gym.Simulators.fira import Fira
 
 
-
 class VSSBaseEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
     }
     NORM_BOUNDS = 1.2
-    
+
     def __init__(self, field_type: int,
-                 n_robots_blue: int, n_robots_yellow: int, time_step: float):
+                 n_robots_blue: int, n_robots_yellow: int, time_step: float,
+                 window_size: int = 10):
         # Initialize Simulator
         self.time_step = time_step
         self.rsim = RSimVSS(field_type=field_type,
-                                      n_robots_blue=n_robots_blue,
-                                      n_robots_yellow=n_robots_yellow,
-                                      time_step_ms=int(self.time_step*1000))
+                            n_robots_blue=n_robots_blue,
+                            n_robots_yellow=n_robots_yellow,
+                            time_step_ms=int(self.time_step*1000))
         self.n_robots_blue = n_robots_blue
         self.n_robots_yellow = n_robots_yellow
-
+        self.window_size = window_size
         # Get field dimensions
         self.field_type = field_type
         self.field = self.rsim.get_field_params()
-        self.max_pos = max(self.field.width / 2, (self.field.length / 2) 
-                                + self.field.penalty_length)
+        self.max_pos = max(self.field.width / 2, (self.field.length / 2)
+                           + self.field.penalty_length)
         max_wheel_rad_s = (self.field.rbt_motor_max_rpm / 60) * 2 * np.pi
         self.max_v = max_wheel_rad_s * self.field.rbt_wheel_radius
         # 0.04 = robot radius (0.0375) + wheel thicknees (0.0025)
         self.max_w = np.rad2deg(self.max_v / 0.04)
-        
-        # Initiate 
+
+        # Initiate
         self.frame: Frame = None
         self.last_frame: Frame = None
         self.view = None
@@ -74,7 +74,7 @@ class VSSBaseEnv(gym.Env):
         self.sent_commands = None
 
         # Close render window
-        del(self.view)
+        del (self.view)
         self.view = None
 
         initial_pos_frame: Frame = self._get_initial_positions_frame()
@@ -100,14 +100,15 @@ class VSSBaseEnv(gym.Env):
 
         '''
         if self.view == None:
+            print('indo renderizar')
             from rsoccer_gym.Render import RCGymRender
+            print('importei')
             self.view = RCGymRender(self.n_robots_blue,
-                                 self.n_robots_yellow,
-                                 self.field,
-                                 simulator='vss')
+                                    self.n_robots_yellow,
+                                    self.field,
+                                    simulator='vss')
 
         return self.view.render_frame(self.frame, return_rgb_array=mode == "rgb_array")
-        
 
     def close(self):
         self.rsim.stop()
