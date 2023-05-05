@@ -257,7 +257,8 @@ class VSSStackEnv(VSSBaseEnv):
         # Convert to rad/s
         left_wheel_speed /= self.field.rbt_wheel_radius
         right_wheel_speed /= self.field.rbt_wheel_radius
-
+        left_wheel_speed += np.random.normal(0, 0.05)
+        right_wheel_speed += np.random.normal(0, 0.05)
         return left_wheel_speed, right_wheel_speed
 
     def __ball_grad(self):
