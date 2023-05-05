@@ -240,6 +240,9 @@ class VSSStackEnv(VSSBaseEnv):
         return pos_frame
 
     def _actions_to_v_wheels(self, actions):
+        max_v = np.random.uniform(0.8, 1.2)
+        self.max_v = max_v
+
         left_wheel_speed = actions[0] * self.max_v
         right_wheel_speed = actions[1] * self.max_v
 
