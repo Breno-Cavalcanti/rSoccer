@@ -69,6 +69,7 @@ class VSSEnvGoTo(VSSBaseEnv):
         self.target_point = (0, 0)
         self.ou_actions = []
         self.count_steps = 0
+        self.last_reward = 0
         for i in range(self.n_robots_blue + self.n_robots_yellow):
             self.ou_actions.append(
                 OrnsteinUhlenbeckAction(self.action_space, dt=self.time_step)
@@ -80,15 +81,16 @@ class VSSEnvGoTo(VSSBaseEnv):
         self.actions = None
         self.reward_shaping_total = None
         self.previous_ball_potential = None
+        self.count_steps = 0
         for ou in self.ou_actions:
             ou.reset()
 
-        return super().reset()
+        return super().reset(), {}
 
     def step(self, action):
         observation, reward, done, _ = super().step(action)
         self.count_steps += 1
-        return observation, reward, done, self.reward_shaping_total
+        return observation, reward, done, False, self.reward_shaping_total
 
     def _frame_to_observations(self):
 
@@ -113,6 +115,7 @@ class VSSEnvGoTo(VSSBaseEnv):
             observation.append(self.norm_w(self.frame.robots_blue[i].v_theta))
         observation.append(self.target_point[0])
         observation.append(self.target_point[1])
+        observation.append(self.__dist_reward())
         # for i in range(self.n_robots_yellow):
         #     observation.append(self.norm_pos(self.frame.robots_yellow[i].x))
         #     observation.append(self.norm_pos(self.frame.robots_yellow[i].y))
@@ -156,14 +159,14 @@ class VSSEnvGoTo(VSSBaseEnv):
                                          'goal_achievement': 0,
                                          'goal_not_achieved': 0,}
         self.reward_shaping_total['dist_reward'] += reward
+        goal = False
         if abs(reward) <= 0.08:
             goal = True
-            reward = 1.2
+            reward = 10
             self.reward_shaping_total['goal_achievement'] += 1
-        else:
-            goal = False
 
-        if self.count_steps >= 1200:
+
+        if self.count_steps >= 1199:
             goal = True
             self.reward_shaping_total['goal_not_achieved'] += 1
         return reward, goal
@@ -181,7 +184,7 @@ class VSSEnvGoTo(VSSBaseEnv):
 
         def theta(): return random.uniform(0, 360)
 
-        self.target_point = (0, 0)
+        self.target_point = (x(), y())
         pos_frame: Frame = Frame()
         
 
@@ -263,20 +266,8 @@ class VSSEnvGoTo(VSSBaseEnv):
 
         return grad_ball_potential
     def __dist_reward(self):
-        """
-        Calculates the reward for the robot based on its distance to the target point.
 
-        Parameters:
-        - x_robot: The x-coordinate of the robot.
-        - y_robot: The y-coordinate of the robot.
-        - x_target: The x-coordinate of the target.
-        - y_target: The y-coordinate of the target.
 
-        Returns:
-        - reward: The calculated reward based on the distance from the robot to the target.
-        """
-
-        # Calculate the Euclidean distance between the robot and the target
         x_robot = self.frame.robots_blue[0].x
         y_robot = self.frame.robots_blue[0].y
         x_target = self.target_point[0]
