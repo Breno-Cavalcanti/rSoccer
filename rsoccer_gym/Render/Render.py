@@ -123,7 +123,7 @@ class RCGymRender:
         '''
 
         self.ball.set_translation(frame.ball.x, frame.ball.y)
-
+        # self.target.set_translation(frame.target.x, frame.target.y)
         for i, blue in enumerate(frame.robots_blue.values()):
             self.blue_robots[i].set_translation(blue.x, blue.y)
             self.blue_robots[i].set_rotation(np.deg2rad(blue.theta))
@@ -521,11 +521,12 @@ class RCGymRender:
         # Return the transform class to change robot position
         return robot_transform
 
+
     def _add_ball(self):
         ball_radius: float = self.field.ball_radius
         ball_transform:rendering.Transform = rendering.Transform()
         
-        ball: rendering.Geom = rendering.make_circle(ball_radius, filled=True)
+        ball: rendering.Geom = rendering.make_circle(ball_radius, filled=False)
         ball.set_color(*BALL_ORANGE)
         ball.add_attr(ball_transform)
         

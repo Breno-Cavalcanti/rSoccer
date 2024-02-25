@@ -12,7 +12,7 @@ class Frame:
         self.ball: Ball = Ball()
         self.robots_blue: Dict[int, Robot] = {}
         self.robots_yellow: Dict[int, Robot] = {}
-
+        # self.target = Ball()
 
 class FrameVSS(Frame):
     def parse(self, state, n_blues=3, n_yellows=3):
